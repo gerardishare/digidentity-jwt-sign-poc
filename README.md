@@ -78,7 +78,7 @@ API endpoints for each environment are configured in:
 
 ## Project Structure
 ```
-github-search/
+project_root/
 ├── .env                # Environment variables (not in repo)
 ├── .gitignore         # Git ignore rules
 ├── README.md          # This documentation
@@ -89,6 +89,7 @@ github-search/
 │   ├── config.py     # Configuration loader
 │   ├── preprod.py    # Preproduction settings
 │   └── prod.py       # Production settings
+│   └── certificates.pem.example # Example template for certificates
 ├── static/           # Static files
 │   └── style.css     # CSS styles
 └── templates/        # HTML templates
@@ -147,4 +148,8 @@ The application requires a certificate chain file for JWT signing. To set up:
    - Follow with any intermediate certificates
    - End with the root certificate
 
-Alternatively, you can specify a different certificate path using the `CERTIFICATE_CHAIN_PATH` environment variable 
+Configuration options:
+- Environment variable: `CERTIFICATE_CHAIN_PATH`
+  - Example: `export CERTIFICATE_CHAIN_PATH=/path/to/your/certificates.pem`
+
+Note: The certificate file is excluded from version control for security reasons. Make sure to properly manage your certificates outside the repository. 
