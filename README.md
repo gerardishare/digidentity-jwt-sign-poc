@@ -1,6 +1,6 @@
 # JWT Signing with Digidentity
 
-A simple web application that allows you to sign JWTs using the Digidentity API. The application uses OAuth2 client credentials flow for authentication and supports both preproduction and production environments.
+A simple web application that allows you to sign JWTs using the Digidentity API. The application uses OAuth2 client credentials flow for authentication and supports both preproduction and production environments. The application is preconfigured to use [iSHARE JWT]() structure.
 
 ## Prerequisites
 
@@ -132,3 +132,19 @@ If you encounter issues:
 4. Validate the JWT header and body JSON format
 5. Make sure your virtual environment is activated
 6. Try recreating the virtual environment if dependencies aren't working 
+
+## Configuration
+
+### Certificates
+The application requires a certificate chain file for JWT signing. To set up:
+
+1. Copy the example certificate file:
+   ```bash
+   cp config/certificates.pem.example config/certificates.pem
+   ```
+2. Replace the contents with your actual certificate chain in PEM format
+   - Start with your leaf certificate
+   - Follow with any intermediate certificates
+   - End with the root certificate
+
+Alternatively, you can specify a different certificate path using the `CERTIFICATE_CHAIN_PATH` environment variable 

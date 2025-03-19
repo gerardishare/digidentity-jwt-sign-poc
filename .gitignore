@@ -17,4 +17,7 @@ ENV/
 .env
 
 # Logs
-*.log 
+*.log
+
+# Certificates
+config/certificates.pem 

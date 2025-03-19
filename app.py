@@ -60,12 +60,57 @@ def authenticate():
         return {'success': True}
     return {'success': False, 'error': 'Authentication failed'}, 401
 
+def load_certificates(cert_path):
+    """Load certificates from PEM file and return as array of base64 encoded strings."""
+    try:
+        with open(cert_path, 'r') as f:
+            content = f.read()
+            # Split on certificate boundaries and filter empty strings
+            certs = [cert.strip() for cert in content.split('-----END CERTIFICATE-----')]
+            # Process each certificate
+            cert_array = []
+            for cert in certs:
+                if cert:  # Skip empty strings
+                    # Add back the END marker that was removed by split
+                    cert = cert + '-----END CERTIFICATE-----'
+                    # Remove headers/footers and whitespace
+                    cert = cert.replace('-----BEGIN CERTIFICATE-----', '') \
+                             .replace('-----END CERTIFICATE-----', '') \
+                             .strip()
+                    # Remove any newlines to get clean base64
+                    cert = cert.replace('\n', '')
+                    cert_array.append(cert)
+            return cert_array
+    except FileNotFoundError:
+        logger.error(f"Certificate file not found: {cert_path}")
+        return []
+    except Exception as e:
+        logger.error(f"Error loading certificates: {e}")
+        return []
+
 @app.route('/sign', methods=['POST'])
 def sign():
     try:
         # Parse JSON from form data
         jwt_header = json.loads(request.form.get('jwt_header'))
         jwt_body = json.loads(request.form.get('jwt_body'))
+        
+        # Load certificates and add to header
+        cert_path = os.getenv('CERTIFICATE_CHAIN_PATH')
+        if cert_path is None:
+            raise ValueError(
+                "CERTIFICATE_CHAIN_PATH environment variable is not set and default path is None"
+            )
+        if not os.path.exists(cert_path):
+            raise FileNotFoundError(
+                f"Certificate chain file not found at {cert_path}. "
+                "Please copy config/certificates.pem.example to config/certificates.pem "
+                "and add your certificate chain."
+            )
+        certificates = load_certificates(cert_path)
+        if certificates:
+            jwt_header['x5c'] = certificates
+        
         access_token = session.get('access_token')
         api_key = os.getenv('DIGIDENTITY_API_KEY')
         

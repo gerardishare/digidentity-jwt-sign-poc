@@ -11,9 +11,9 @@
             <button id="auth-button" onclick="authenticate()">Authenticate with Digidentity</button>
             <span id="auth-status" class="hidden">✓ Authenticated</span>
         </div>
-        <form id="sign-form" action="{{ url_for('sign') }}" method="post" class="hidden">
+        <form id="sign-form" action="{{ url_for('sign') }}" method="post" class="hiddenx">
             <div class="jwt-input">
-                <label for="jwt-header">JWT Header:</label>
+                <label for="jwt-header">JWT Header (the signing application will append x5c header containing certificates automatically):</label>
                 <textarea 
                     id="jwt-header" 
                     name="jwt_header" 
@@ -21,8 +21,7 @@
                     required
                 >{
     "alg": "RS256",
-    "typ": "JWT",
-    "kid": "your-key-id"
+    "typ": "JWT"
 }</textarea>
             </div>
             <div class="jwt-input">
@@ -33,11 +32,12 @@
                     placeholder="Enter JWT body (JSON format)..."
                     required
                 >{
-    "iss": "your-issuer",
-    "sub": "your-subject",
-    "aud": "your-audience",
-    "exp": 1735689600,
-    "iat": 1735603200
+    "iss": "did:ishare:EU.NL.NTRNL-10000001",
+    "sub": "did:ishare:EU.NL.NTRNL-10000001",
+    "aud": "did:ishare:EU.NL.NTRNL-10000000",
+    "jti": "378a47c4-2822-4ca5-a49a-7e5a1cc7ea59",
+    "exp": 1504683475,
+    "iat": 1504683445
 }</textarea>
             </div>
             <button type="submit">Sign JWT</button>
