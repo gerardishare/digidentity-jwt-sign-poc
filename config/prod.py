@@ -1,0 +1,2 @@
+TOKEN_ENDPOINT = ''
+SIGN_ENDPOINT = '' 

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sign Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Sign Results</h1>
+        <div class="results">
+            <div class="jwt-result">
+                <h2>Signed JWT</h2>
+                <pre>{{ signed_jwt | tojson(indent=2) }}</pre>
+            </div>
+        </div>
+        <a href="{{ url_for('index') }}" class="back-button">Back to Sign</a>
+    </div>
+</body>
+</html> 

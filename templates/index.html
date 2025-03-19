@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sign JWT with Digidentity</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Sign JWT with Digidentity</h1>
+        <div id="auth-section">
+            <button id="auth-button" onclick="authenticate()">Authenticate with Digidentity</button>
+            <span id="auth-status" class="hidden">✓ Authenticated</span>
+        </div>
+        <form id="sign-form" action="{{ url_for('sign') }}" method="post" class="hidden">
+            <div class="jwt-input">
+                <label for="jwt-header">JWT Header:</label>
+                <textarea 
+                    id="jwt-header" 
+                    name="jwt_header" 
+                    placeholder="Enter JWT header (JSON format)..."
+                    required
+                >{
+    "alg": "RS256",
+    "typ": "JWT",
+    "kid": "your-key-id"
+}</textarea>
+            </div>
+            <div class="jwt-input">
+                <label for="jwt-body">JWT Body:</label>
+                <textarea 
+                    id="jwt-body" 
+                    name="jwt_body" 
+                    placeholder="Enter JWT body (JSON format)..."
+                    required
+                >{
+    "iss": "your-issuer",
+    "sub": "your-subject",
+    "aud": "your-audience",
+    "exp": 1735689600,
+    "iat": 1735603200
+}</textarea>
+            </div>
+            <button type="submit">Sign JWT</button>
+        </form>
+    </div>
+
+    <script>
+        async function authenticate() {
+            try {
+                const response = await fetch('/authenticate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (response.ok) {
+                    document.getElementById('auth-button').classList.add('hidden');
+                    document.getElementById('auth-status').classList.remove('hidden');
+                    document.getElementById('sign-form').classList.remove('hidden');
+                } else {
+                    alert('Authentication failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Authentication error:', error);
+                alert('Authentication failed. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html> 
