@@ -43,10 +43,12 @@ pip install -r requirements.txt
 4. Create a `.env` file in the root directory with your credentials:
 ```
 FLASK_SECRET_KEY=your-secret-key
+FLASK_ENV=preprod  # or 'prod' for production
 DIGIDENTITY_CLIENT_ID=your-client-id
 DIGIDENTITY_CLIENT_SECRET=your-client-secret
 DIGIDENTITY_API_KEY=your-api-key
-FLASK_ENV=preprod  # or 'prod' for production
+DIGIDENTITY_AUTO_SIGNER_ID=you-autosigner-id
+CERTIFICATE_CHAIN_PATH=path/to/certchain.pem
 ```
 
 ## Running the Application
@@ -60,11 +62,10 @@ python app.py
 
 ## Usage
 
-1. The application shows two text areas for JWT header and body with default values
-2. Click "Authenticate with Digidentity" to obtain an access token using client credentials flow
-3. After successful authentication, you can modify the JWT header and body as needed
-4. Click "Sign JWT" to send the signing request to Digidentity
-5. The signed JWT will be displayed on the results page
+1. Click "Authenticate with Digidentity" to obtain an access token using client credentials flow
+2. After successful authentication, you can modify the JWT header and body as needed
+3. Click "Sign JWT" to send the signing request to Digidentity
+4. The signed JWT will be displayed on the results page
 
 ## Environment Configuration
 
@@ -150,7 +151,6 @@ The application requires a certificate chain file for JWT signing. To set up:
 
 Configuration options:
 - Environment variable: `CERTIFICATE_CHAIN_PATH`
-  - Example: `export CERTIFICATE_CHAIN_PATH=/path/to/your/certificates.pem`
 
 Note: The certificate file is excluded from version control for security reasons. Make sure to properly manage your certificates outside the repository. 
 
@@ -182,10 +182,11 @@ Note: The certificate file is excluded from version control for security reasons
    - Add the following application settings:
      ```
      FLASK_SECRET_KEY=your-secret-key
+     FLASK_ENV=preprod  # or 'prod' for production
      DIGIDENTITY_CLIENT_ID=your-client-id
      DIGIDENTITY_CLIENT_SECRET=your-client-secret
      DIGIDENTITY_API_KEY=your-api-key
-     FLASK_ENV=preprod  # or 'prod' for production
+     DIGIDENTITY_AUTO_SIGNER_ID=you-autosigner-id
      CERTIFICATE_CHAIN_PATH=/home/site/wwwroot/config/certificates.pem
      SCM_DO_BUILD_DURING_DEPLOYMENT=true
      WEBSITE_WEBDEPLOY_USE_SCM=false
