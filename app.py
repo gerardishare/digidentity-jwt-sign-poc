@@ -67,10 +67,9 @@ def load_certificates(cert_path):
             content = f.read()
             # Split on certificate boundaries and filter empty strings
             certs = [cert.strip() for cert in content.split('-----END CERTIFICATE-----')]
-            # Process each certificate
             cert_array = []
             for cert in certs:
-                if cert:  # Skip empty strings
+                if cert:
                     # Add back the END marker that was removed by split
                     cert = cert + '-----END CERTIFICATE-----'
                     # Remove headers/footers and whitespace
@@ -79,7 +78,21 @@ def load_certificates(cert_path):
                              .strip()
                     # Remove any newlines to get clean base64
                     cert = cert.replace('\n', '')
-                    cert_array.append(cert)
+                    
+                    # Validate base64 encoding
+                    try:
+                        # Test if it's valid base64
+                        base64.b64decode(cert)
+                        cert_array.append(cert)
+                    except Exception as e:
+                        logger.error(f"Invalid base64 in certificate: {e}")
+                        continue
+                        
+            if not cert_array:
+                logger.error("No valid certificates found in chain")
+            else:
+                logger.info(f"Successfully loaded {len(cert_array)} certificates")
+                
             return cert_array
     except FileNotFoundError:
         logger.error(f"Certificate file not found: {cert_path}")
@@ -107,25 +120,45 @@ def sign():
                 "Please copy config/certificates.pem.example to config/certificates.pem "
                 "and add your certificate chain."
             )
+            
+        # Load and validate certificates
         certificates = load_certificates(cert_path)
-        if certificates:
-            jwt_header['x5c'] = certificates
+        if not certificates:
+            raise ValueError("No valid certificates found in certificate chain")
+            
+        # Add certificates to header and ensure proper algorithm
+        jwt_header.update({
+            'alg': 'RS256',  # Ensure we're using RS256
+            'typ': 'JWT',    # Explicitly set JWT type
+            'x5c': certificates  # Add certificate chain
+        })
+        
+        logger.info("Certificate chain loaded:")
+        logger.info(f"Number of certificates: {len(certificates)}")
+        for i, cert in enumerate(certificates):
+            logger.info(f"Certificate {i+1} length: {len(cert)}")
+            logger.info(f"Certificate {i+1} preview: {cert[:50]}...")
         
         access_token = session.get('access_token')
         api_key = os.getenv('DIGIDENTITY_API_KEY')
         
         def base64url_encode(data):
             """Base64Url-encode data according to JWT spec."""
-            encoded = base64.urlsafe_b64encode(json.dumps(data).encode())
-            return encoded.rstrip(b'=').decode('utf-8')
+            if isinstance(data, str):
+                data = data.encode('utf-8')
+            elif isinstance(data, dict):
+                data = json.dumps(data).encode('utf-8')
+            
+            encoded = base64.urlsafe_b64encode(data).rstrip(b'=')
+            return encoded.decode('utf-8')
         
         # Create JWT components
         header_b64 = base64url_encode(jwt_header)
         payload_b64 = base64url_encode(jwt_body)
         signing_input = f"{header_b64}.{payload_b64}"
         
-        # Calculate hash of the signing input
-        calculated_hash = hashlib.sha256(signing_input.encode()).hexdigest()
+        # Calculate hash using binary data, not string
+        calculated_hash = hashlib.sha256(signing_input.encode('utf-8')).hexdigest()
         
         logger.info(f"JWT Components:")
         logger.info(f"Header (decoded): {jwt_header}")
@@ -136,7 +169,7 @@ def sign():
         logger.info(f"Hash: {calculated_hash}")
         
         # Prepare signing request
-        url = config.SIGN_ENDPOINT
+        url = config.SIGN_ENDPOINT.format(auto_signer_id=os.getenv('DIGIDENTITY_AUTO_SIGNER_ID'))
         headers = {
             'Authorization': f'Bearer {access_token}',
             'Api-Key': api_key,
@@ -146,7 +179,7 @@ def sign():
             "data": {
                 "type": "sign",
                 "attributes": {
-                    "hash_to_sign": calculated_hash
+                    "hash_to_sign": calculated_hash  # Send base64 encoded binary hash
                 }
             }
         }
@@ -170,19 +203,19 @@ def sign():
         
         # Extract signature and create final JWT
         response_data = response.json()
-        signature = response_data['data']['attributes']['signature']
-        signed_jwt = f"{signing_input}.{signature}"
+        signature = response_data['data']['attributes']['signature'].replace("\n", "")
+        jwt_signature = base64.urlsafe_b64encode(base64.b64decode(signature)).decode().strip("=")
         
+        signed_jwt = f"{signing_input}.{jwt_signature}"
+        
+        logger.info("Final JWT components:")
+        logger.info(f"Header part: {header_b64}")
+        logger.info(f"Payload part: {payload_b64}")
+        logger.info(f"Signature part: {signature}")
         logger.info(f"Final JWT: {signed_jwt}")
         
         return render_template('result.html', signed_jwt=signed_jwt)
         
-    except json.JSONDecodeError as e:
-        logger.error(f"Invalid JSON in request: {e}")
-        return {'error': 'Invalid JSON format'}, 400
-    except KeyError as e:
-        logger.error(f"Missing required field in response: {e}")
-        return {'error': 'Invalid response format from signing service'}, 500
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
         return {'error': 'Internal server error'}, 500

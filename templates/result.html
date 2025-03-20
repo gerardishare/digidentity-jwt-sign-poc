@@ -1,19 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Sign Results</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Signed JWT Result</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1>Sign Results</h1>
-        <div class="results">
-            <div class="jwt-result">
-                <h2>Signed JWT</h2>
-                <pre>{{ signed_jwt | tojson(indent=2) }}</pre>
-            </div>
+    <h1>Signed JWT</h1>
+    <div class="result-container">
+        <textarea id="jwtResult" class="jwt-textarea" readonly>{{ signed_jwt }}</textarea>
+        <div class="button-group">
+            <button onclick="copyJWT()" class="copy-button">Copy JWT</button>
+            <a href="{{ url_for('index') }}" class="back-button">Back</a>
         </div>
-        <a href="{{ url_for('index') }}" class="back-button">Back to Sign</a>
     </div>
+
+    <script>
+        function copyJWT() {
+            const textarea = document.getElementById('jwtResult');
+            textarea.select();
+            textarea.setSelectionRange(0, 99999); // For mobile devices
+            
+            navigator.clipboard.writeText(textarea.value).then(function() {
+                const button = document.querySelector('.copy-button');
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Failed to copy text: ', err);
+            });
+        }
+    </script>
 </body>
 </html> 

@@ -11,7 +11,7 @@
             <button id="auth-button" onclick="authenticate()">Authenticate with Digidentity</button>
             <span id="auth-status" class="hidden">✓ Authenticated</span>
         </div>
-        <form id="sign-form" action="{{ url_for('sign') }}" method="post" class="hiddenx">
+        <form id="sign-form" action="{{ url_for('sign') }}" method="post" class="hidden">
             <div class="jwt-input">
                 <label for="jwt-header">JWT Header (the signing application will append x5c header containing certificates automatically):</label>
                 <textarea 

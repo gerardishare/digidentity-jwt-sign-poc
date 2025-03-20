@@ -153,3 +153,138 @@ Configuration options:
   - Example: `export CERTIFICATE_CHAIN_PATH=/path/to/your/certificates.pem`
 
 Note: The certificate file is excluded from version control for security reasons. Make sure to properly manage your certificates outside the repository. 
+
+## Azure Deployment
+
+### Prerequisites
+1. An Azure account with an active subscription
+2. A GitHub account with your code repository
+3. Azure CLI installed (optional, for local testing)
+
+### Setup Azure Resources
+
+1. Create an Azure App Service:
+   - Go to Azure Portal (portal.azure.com)
+   - Click "Create a resource"
+   - Search for "Web App"
+   - Choose "Web App" and click "Create"
+   - Fill in the details:
+     - Resource Group: Create new or select existing
+     - Name: your-app-name (must be unique)
+     - Publish: Code
+     - Runtime stack: Python 3.8 or higher
+     - Operating System: Linux
+     - Region: Choose nearest to you
+   - Click "Review + create" and then "Create"
+
+2. Configure Application Settings:
+   - In your web app, go to "Settings" > "Configuration"
+   - Add the following application settings:
+     ```
+     FLASK_SECRET_KEY=your-secret-key
+     DIGIDENTITY_CLIENT_ID=your-client-id
+     DIGIDENTITY_CLIENT_SECRET=your-client-secret
+     DIGIDENTITY_API_KEY=your-api-key
+     FLASK_ENV=preprod  # or 'prod' for production
+     CERTIFICATE_CHAIN_PATH=/home/site/wwwroot/config/certificates.pem
+     SCM_DO_BUILD_DURING_DEPLOYMENT=true
+     WEBSITE_WEBDEPLOY_USE_SCM=false
+     ```
+
+### GitHub Actions Setup
+
+1. Create a GitHub Actions workflow file:
+   - Create `.github/workflows/azure-deploy.yml` in your repository
+
+2. Add the following content to the file:
+   ```yaml
+   name: Deploy to Azure
+   
+   on:
+     push:
+       branches:
+         - main  # or your default branch
+   
+   jobs:
+     build-and-deploy:
+       runs-on: ubuntu-latest
+       
+       steps:
+       - uses: actions/checkout@v2
+       
+       - name: Set up Python
+         uses: actions/setup-python@v2
+         with:
+           python-version: '3.8'
+           
+       - name: Install dependencies
+         run: |
+           python -m pip install --upgrade pip
+           pip install -r requirements.txt
+           
+       - name: Upload certificates
+         run: |
+           mkdir -p config
+           echo "${{ secrets.CERTIFICATE_CHAIN }}" > config/certificates.pem
+           
+       - name: Deploy to Azure
+         uses: azure/webapps-deploy@v2
+         with:
+           app-name: 'your-app-name'  # Replace with your app name
+           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+           package: .
+   ```
+
+### Configure GitHub Secrets
+
+1. Get the publish profile:
+   - Go to your Azure Web App
+   - Click "Get publish profile"
+   - Copy the contents
+
+2. Add secrets in GitHub:
+   - Go to your GitHub repository
+   - Click "Settings" > "Secrets and variables" > "Actions"
+   - Add the following secrets:
+     - `AZURE_WEBAPP_PUBLISH_PROFILE`: Paste the publish profile content
+     - `CERTIFICATE_CHAIN`: Content of your certificates.pem file
+
+### Deploy
+
+1. Push your code to GitHub:
+   ```bash
+   git add .
+   git commit -m "Ready for Azure deployment"
+   git push
+   ```
+
+2. Monitor deployment:
+   - Go to your GitHub repository
+   - Click "Actions" tab
+   - Watch the deployment progress
+
+### Troubleshooting Deployment
+
+1. Check deployment logs:
+   - Go to GitHub Actions tab
+   - Click on the latest workflow run
+   - Expand the job logs for details
+
+2. Check Azure logs:
+   - Go to Azure Portal
+   - Navigate to your Web App
+   - Click "Log stream" to see live logs
+   - Check "App Service logs" for detailed logging
+
+3. Common issues:
+   - Certificate path issues: Verify the CERTIFICATE_CHAIN_PATH in Azure configuration
+   - Environment variables: Ensure all required variables are set in Azure configuration
+   - Python version mismatch: Check the Python version in Azure matches your requirements
+   - Dependencies: Make sure all requirements are properly listed in requirements.txt
+
+### Security Notes
+
+- Never commit sensitive data (certificates, keys, credentials) to the repository
+- Always use GitHub Secrets for sensitive information
+- Regularly rotate your credentials and update the secrets
+- Consider using Azure Key Vault for managing secrets in production 
